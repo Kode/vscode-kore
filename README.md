@@ -1,3 +1,3 @@
-# Kinc extension
+# Kore extension
 
-This is the Kinc extension for Visual Studio Code.
+This is the Kore extension for Visual Studio Code.
