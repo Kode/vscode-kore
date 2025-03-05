@@ -1,3 +1,7 @@
+### 25.3.0
+
+* Rename to Kore so it can work for all versions and make some adjustments for Kore 3
+
 ### 24.4.0
 
 * Catch errors properly when running kfiles to figure out the path to Kinc

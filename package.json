@@ -1,8 +1,8 @@
 {
-	"name": "kinc",
-	"displayName": "Kinc",
-	"description": "Kinc support",
-	"version": "24.4.0",
+	"name": "kore",
+	"displayName": "Kore",
+	"description": "Kore support",
+	"version": "25.3.0",
 	"publisher": "kodetech",
 	"engines": {
 		"vscode": "^1.64.0"
@@ -11,54 +11,53 @@
 		"Other"
 	],
 	"keywords": [
-		"Kinc",
 		"Kore"
 	],
 	"activationEvents": [
 		"workspaceContains:kfile.js",
-		"workspaceContains:kincfile.js",
 		"workspaceContains:korefile.js",
-		"onCommand:kinc.init",
-		"onCommand:kinc.compile"
+		"workspaceContains:kincfile.js",
+		"onCommand:kore.init",
+		"onCommand:kore.compile"
 	],
 	"main": "./extension",
 	"contributes": {
 		"commands": [
 			{
-				"command": "kinc.init",
+				"command": "kore.init",
 				"title": "Init Project",
-				"category": "Kinc"
+				"category": "Kore"
 			},
 			{
-				"command": "kinc.updateKinc",
-				"title": "Update extension-internal Kinc",
-				"category": "Kinc"
+				"command": "kore.updateKore",
+				"title": "Update extension-internal Kore",
+				"category": "Kore"
 			}
 		],
 		"configuration": {
 			"type": "object",
-			"title": "Kinc",
+			"title": "Kore",
 			"properties": {
-				"kinc.kincPath": {
+				"kore.korePath": {
 					"type": "string",
 					"default": "",
-					"description": "Points to a Kinc directory."
+					"description": "Points to a Kore directory."
 				},
-				"kinc.ffmpeg": {
+				"kore.ffmpeg": {
 					"type": "string",
 					"default": "",
 					"description": "Path to ffmpeg for extended audio and video format support."
 				},
-				"kinc.buildDir": {
+				"kore.buildDir": {
 					"type": "string",
 					"default": "build",
-					"description": "Relative path to the Kinc build dir for the project."
+					"description": "Relative path to the Kore build dir for the project."
 				}
 			}
 		},
 		"taskDefinitions": [
 			{
-				"type": "Kinc",
+				"type": "Kore",
 				"required": [
 					"target"
 				],
@@ -73,7 +72,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Kode/vscode-kinc"
+		"url": "https://github.com/Kode/vscode-kore"
 	},
 	"devDependencies": {
 		"@types/mocha": "^9.1.0",

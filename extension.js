@@ -54,11 +54,11 @@ function sysdir() {
 }
 
 function getExtensionPath() {
-	return vscode.extensions.getExtension('kodetech.kinc').extensionPath;
+	return vscode.extensions.getExtension('kodetech.kore').extensionPath;
 }
 
-// will error when findKinc is used
-function findKincWithKfile(channel, directory) {
+// will error when findKore is used
+function findKoreWithKfile(channel, directory) {
 	return new Promise((resolve, reject) => {
 		try {
 			const kfile = path.resolve(directory, 'kfile.js');
@@ -121,7 +121,7 @@ function findKincWithKfile(channel, directory) {
 					{},
 					'').catch(
 						(err) => {
-							channel.appendLine('Error when searching for Kinc in the kfile: ' + err);
+							channel.appendLine('Error when searching for Kore in the kfile: ' + err);
 							reject();
 						}
 					);;
@@ -131,19 +131,19 @@ function findKincWithKfile(channel, directory) {
 			}
 		}
 		catch (err) {
-			channel.appendLine('Error when searching for Kinc in the kfile: ' + err);
+			channel.appendLine('Error when searching for Kore in the kfile: ' + err);
 			reject();
 		}
 	});
 }
 
 let currentDirectory = null;
-let kincDirectory = null;
+let koreDirectory = null;
 
 class Project {
 	constructor(name) {
-		if (name === 'Kinc') {
-			kincDirectory = currentDirectory;
+		if (name === 'Kore') {
+			koreDirectory = currentDirectory;
 		}
 
 		return new Proxy(this, {
@@ -153,7 +153,7 @@ class Project {
 			get: (target, prop, receiver) => {
 				if (prop === 'addProject') {
 					return async (directory) => {
-						if (name === 'Kinc') {
+						if (name === 'Kore' || name === 'Kinc') {
 							return new Proxy({}, {
 								set: (object, key, value, proxy) => {
 									return true;
@@ -166,7 +166,7 @@ class Project {
 						else {
 							const prevDirectory = currentDirectory;
 							currentDirectory = path.resolve(currentDirectory, directory);
-							const r = await findKincWithKfile(channel, currentDirectory);
+							const r = await findKoreWithKfile(channel, currentDirectory);
 							currentDirectory = prevDirectory;
 							return r;
 						}
@@ -195,60 +195,70 @@ const AudioApi = {};
 
 const VrApi = {};
 
-let ranKincFile = false;
+let ranKoreFile = false;
 
-async function findKinc(channel) {
-	if (!ranKincFile) {
-		kincDirectory = null;
+async function findKore(channel) {
+	if (!ranKoreFile) {
+		koreDirectory = null;
 		currentDirectory = path.resolve(vscode.workspace.rootPath);
 		try {
-			await findKincWithKfile(channel, currentDirectory);
-			ranKincFile = true;
+			await findKoreWithKfile(channel, currentDirectory);
+			ranKoreFile = true;
 		}
 		catch (err) {
 
 		}
 	}
 
-	if (kincDirectory) {
-		return kincDirectory;
+	if (koreDirectory) {
+		return koreDirectory;
 	}
 
-	let localkincpath = path.resolve(vscode.workspace.rootPath, 'Kinc');
-	if (fs.existsSync(localkincpath) && (fs.existsSync(path.join(localkincpath, 'Tools', sysdir(), 'kmake' + sys2())) || fs.existsSync(path.join(localkincpath, 'Tools', 'kmake', 'kmake')))) {
-		return localkincpath;
+	let localkorepath = path.resolve(vscode.workspace.rootPath, 'Kore');
+	if (fs.existsSync(localkorepath) &&
+		(
+			fs.existsSync(path.join(localkorepath, 'tools', sysdir(), 'kmake' + sys2()))
+			|| fs.existsSync(path.join(localkorepath, 'tools', 'kmake', 'kmake'))
+			|| fs.existsSync(path.join(localkorepath, 'Tools', sysdir(), 'kmake' + sys2()))
+			|| fs.existsSync(path.join(localkorepath, 'Tools', 'kmake', 'kmake'))
+		)) {
+		return localkorepath;
 	}
 
-	let kincpath = vscode.workspace.getConfiguration('kinc').kincPath;
-	if (kincpath.length > 0) {
-		return path.isAbsolute(kincpath) ? kincpath : path.resolve(vscode.workspace.rootPath, kincpath);
+	let korepath = vscode.workspace.getConfiguration('kore').korePath;
+	if (korepath.length > 0) {
+		return path.isAbsolute(korepath) ? korepath : path.resolve(vscode.workspace.rootPath, korepath);
 	}
 
-	return path.join(getExtensionPath(), 'Kinc');
+	return path.join(getExtensionPath(), 'Kore');
 }
 
-async function isUsingInternalKinc(channel) {
-	return await findKinc(channel) === path.join(getExtensionPath(), 'Kinc');
+async function isUsingInternalKore(channel) {
+	return await findKore(channel) === path.join(getExtensionPath(), 'Kore');
 }
 
 async function findKmake(channel) {
-	const kmakePath = path.join(await findKinc(channel), 'Tools', sysdir(), 'kmake' + sys2());
+	let kmakePath = path.join(await findKore(channel), 'tools', sysdir(), 'kmake' + sys2());
 	if (fs.existsSync(kmakePath)) {
 		return kmakePath;
 	}
-	else {
-		return path.join(await findKinc(channel), 'Tools', 'kmake', 'kmake' + sys());
+
+	kmakePath = path.join(await findKore(channel), 'Tools', sysdir(), 'kmake' + sys2());
+	if (fs.existsSync(kmakePath)) {
+		return kmakePath;
 	}
+
+	return path.join(await findKore(channel), 'Tools', 'kmake', 'kmake' + sys());
 }
 
 function findFFMPEG() {
-	return vscode.workspace.getConfiguration('kinc').ffmpeg;
+	return vscode.workspace.getConfiguration('kore').ffmpeg;
 }
 
 function createOptions(target, compile) {
 	const options = [
 		'--from', vscode.workspace.rootPath,
-		'--to', path.join(vscode.workspace.rootPath, vscode.workspace.getConfiguration('kinc').buildDir),
+		'--to', path.join(vscode.workspace.rootPath, vscode.workspace.getConfiguration('kore').buildDir),
 		'-t', target
 	];
 	if (findFFMPEG()) {
@@ -274,7 +284,7 @@ function compile(target, silent) {
 			return;
 		}
 
-		if (!fs.existsSync(path.join(vscode.workspace.rootPath, 'kfile.js')) && !fs.existsSync(path.join(vscode.workspace.rootPath, 'kincfile.js')) && !fs.existsSync(path.join(vscode.workspace.rootPath, 'korefile.js'))) {
+		if (!fs.existsSync(path.join(vscode.workspace.rootPath, 'kfile.js')) && !fs.existsSync(path.join(vscode.workspace.rootPath, 'korefile.js')) && !fs.existsSync(path.join(vscode.workspace.rootPath, 'kincfile.js'))) {
 			channel.appendLine('No kfile found.');
 			reject();
 			return;
@@ -311,11 +321,11 @@ function compile(target, silent) {
 	});
 }
 
-/*let KincDisplayArgumentsProvider = {
+/*let KoreDisplayArgumentsProvider = {
 	init: (api, activationChangedCallback) => {
 		this.api = api;
 		this.activationChangedCallback = activationChangedCallback;
-		this.description = 'Kinc project';
+		this.description = 'Kore project';
 	},
 	activate: (provideArguments) => {
 		this.updateArgumentsCallback = provideArguments;
@@ -352,14 +362,26 @@ function currentPlatform() {
 
 }
 
+function chmod(filepath) {
+	if (fs.existsSync(filepath)) {
+		fs.chmodSync(filepath, 0o755);
+	}
+}
+
 async function chmodEverything() {
 	if (os.platform() === 'win32') {
 		return;
 	}
-	const base = await findKinc();
-	fs.chmodSync(path.join(base, 'Tools', sysdir(), 'kraffiti'), 0o755);
-	fs.chmodSync(path.join(base, 'Tools', sysdir(), 'krafix'), 0o755);
-	fs.chmodSync(path.join(base, 'Tools', sysdir(), 'kmake'), 0o755);
+
+	const base = await findKore();
+
+	chmod(path.join(base, 'tools', sysdir(), 'kraffiti'));
+	chmod(path.join(base, 'tools', sysdir(), 'krafix'));
+	chmod(path.join(base, 'tools', sysdir(), 'kmake'));
+
+	chmod(path.join(base, 'Tools', sysdir(), 'kraffiti'));
+	chmod(path.join(base, 'Tools', sysdir(), 'krafix'));
+	chmod(path.join(base, 'Tools', sysdir(), 'kmake'));
 }
 
 async function checkProject(rootPath, channel) {
@@ -371,7 +393,7 @@ async function checkProject(rootPath, channel) {
 		return;
 	}
 
-	if (await isUsingInternalKinc(channel)) {
+	if (await isUsingInternalKore(channel)) {
 		chmodEverything()
 	}
 
@@ -389,7 +411,7 @@ async function checkProject(rootPath, channel) {
 	const configuration = vscode.workspace.getConfiguration();
 	let config = configuration.get('launch');
 	config.configurations = config.configurations.filter((value) => {
-		return !value.name.startsWith('Kinc: ');
+		return !value.name.startsWith('Kore: ');
 	});
 	if (proto) {
 		config.configurations.push(proto);
@@ -397,7 +419,7 @@ async function checkProject(rootPath, channel) {
 	configuration.update('launch', config, false);*/
 }
 
-const KincTaskProvider = {
+const KoreTaskProvider = {
 	kmake: null,
 	provideTasks: () => {
 		let workspaceRoot = vscode.workspace.rootPath;
@@ -452,7 +474,7 @@ const KincTaskProvider = {
 				}
 
 				let kind = {
-					type: 'Kinc',
+					type: 'Kore',
 					target: system.name,
 				}
 
@@ -463,7 +485,7 @@ const KincTaskProvider = {
 				}
 
 				let task = null;
-				let kmakePath = KincTaskProvider.kmake; //findKmake();
+				let kmakePath = KoreTaskProvider.kmake; //findKmake();
 
 				// On Windows, git bash shell won't accept backward slashes and will fail,
 				// so we explicitly need to convert path to unix-style.
@@ -479,7 +501,7 @@ const KincTaskProvider = {
 
 				function compile() {}
 
-				task = new vscode.Task(kind, vscode.TaskScope.Workspace, `${prefix}Build for ${system.name}`, 'Kinc', new vscode.ShellExecution(kmakePath, args), ['$msCompile']);
+				task = new vscode.Task(kind, vscode.TaskScope.Workspace, `${prefix}Build for ${system.name}`, 'Kore', new vscode.ShellExecution(kmakePath, args), ['$msCompile']);
 				task.group = vscode.TaskGroup.Build;
 				tasks.push(task);
 			}
@@ -492,19 +514,19 @@ const KincTaskProvider = {
 	}
 }
 
-/*const KincDebugProvider = {
+/*const KoreDebugProvider = {
 	provideDebugConfigurations: (folder) => {
 		let configs = [];
 
 		folder.uri;
 
-		const buildDir = vscode.workspace.getConfiguration('kinc').buildDir;
+		const buildDir = vscode.workspace.getConfiguration('kore').buildDir;
 		configs.push({
-			name: 'Kinc: Launch',
+			name: 'Kore: Launch',
 			request: 'launch',
-			type: 'kinc',
+			type: 'kore',
 			appDir: '${workspaceFolder}/' + buildDir,
-			preLaunchTask: 'Kinc: Build',
+			preLaunchTask: 'Kore: Build',
 			internalConsoleOptions: 'openOnSessionStart',
 		});
 
@@ -536,24 +558,24 @@ function resolveDownloadPath(filename) {
     return basePath;
 }
 
-let kincDownloaded = false;
+let koreDownloaded = false;
 
-async function checkKinc(channel) {
-	if (!await isUsingInternalKinc(channel)) {
+async function checkKore(channel) {
+	if (!await isUsingInternalKore(channel)) {
 		return;
 	}
 
-	const downloadPath = resolveDownloadPath('Kinc');
+	const downloadPath = resolveDownloadPath('Kore');
 	if (await directoryExists(downloadPath)) {
-		kincDownloaded = true;
+		koreDownloaded = true;
 		return;
 	}
 
 	return new Promise((resolve, reject) => {
-		vscode.window.showInformationMessage('Downloading Kinc...');
-		let message = vscode.window.setStatusBarMessage('Downloading Kinc...');
+		vscode.window.showInformationMessage('Downloading Kore...');
+		let message = vscode.window.setStatusBarMessage('Downloading Kore...');
 
-		const process = child_process.spawn('git', ['clone', 'https://github.com/Kode/Kinc.git', downloadPath]);
+		const process = child_process.spawn('git', ['clone', 'https://github.com/Kode/Kore.git', downloadPath]);
 
 		let error = null;
 
@@ -567,11 +589,11 @@ async function checkKinc(channel) {
 					message.dispose();
 
 					if (err) {
-						vscode.window.showInformationMessage('Could not download Kinc because ' + error);
+						vscode.window.showInformationMessage('Could not download Kore because ' + error);
 					}
 					else {
-						kincDownloaded = true;
-						vscode.window.showInformationMessage('Finished downloading Kinc.');
+						koreDownloaded = true;
+						vscode.window.showInformationMessage('Finished downloading Kore.');
 					}
 
 					resolve();
@@ -580,10 +602,10 @@ async function checkKinc(channel) {
 			else {
 				message.dispose();
 				if (error) {
-					vscode.window.showInformationMessage('Could not download Kinc because ' + error);
+					vscode.window.showInformationMessage('Could not download Kore because ' + error);
 				}
 				else {
-					vscode.window.showInformationMessage('Could not download Kinc, git returned ' + code + '.');
+					vscode.window.showInformationMessage('Could not download Kore, git returned ' + code + '.');
 				}
 				resolve();
 			}
@@ -591,16 +613,16 @@ async function checkKinc(channel) {
 	});
 }
 
-async function updateKinc() {
-	const downloadPath = resolveDownloadPath('Kinc');
-	if (!kincDownloaded) {
-		vscode.window.showInformationMessage('Could not update Kinc because it was not yet downloaded');
+async function updateKore() {
+	const downloadPath = resolveDownloadPath('Kore');
+	if (!koreDownloaded) {
+		vscode.window.showInformationMessage('Could not update Kore because it was not yet downloaded');
 		return;
 	}
 
 	return new Promise((resolve, reject) => {
-		vscode.window.showInformationMessage('Updating Kinc...');
-		let message = vscode.window.setStatusBarMessage('Updating Kinc...');
+		vscode.window.showInformationMessage('Updating Kore...');
+		let message = vscode.window.setStatusBarMessage('Updating Kore...');
 
 		const process = child_process.spawn('git', ['-C', downloadPath, 'pull', 'origin', 'main']);
 
@@ -616,10 +638,10 @@ async function updateKinc() {
 					message.dispose();
 
 					if (err) {
-						vscode.window.showInformationMessage('Could not update Kinc because ' + error);
+						vscode.window.showInformationMessage('Could not update Kore because ' + error);
 					}
 					else {
-						vscode.window.showInformationMessage('Finished updating Kinc.');
+						vscode.window.showInformationMessage('Finished updating Kore.');
 					}
 
 					resolve();
@@ -628,10 +650,10 @@ async function updateKinc() {
 			else {
 				message.dispose();
 				if (error) {
-					vscode.window.showInformationMessage('Could not update Kinc because ' + error);
+					vscode.window.showInformationMessage('Could not update Kore because ' + error);
 				}
 				else {
-					vscode.window.showInformationMessage('Could not update Kinc, git returned ' + code + '.');
+					vscode.window.showInformationMessage('Could not update Kore, git returned ' + code + '.');
 				}
 				resolve();
 			}
@@ -640,22 +662,22 @@ async function updateKinc() {
 }
 
 exports.activate = async (context) => {
-	channel = vscode.window.createOutputChannel('Kinc');
+	channel = vscode.window.createOutputChannel('Kore');
 
-	await checkKinc(channel);
+	await checkKore(channel);
 
 	if (vscode.workspace.rootPath) {
 		checkProject(vscode.workspace.rootPath, channel);
 	}
 
 	findKmake(channel).then((kmake) => {
-		KincTaskProvider.kmake = kmake;
-		let provider = vscode.workspace.registerTaskProvider('Kinc', KincTaskProvider);
+		KoreTaskProvider.kmake = kmake;
+		let provider = vscode.workspace.registerTaskProvider('Kore', KoreTaskProvider);
 		context.subscriptions.push(provider);
 	});
 
 	// TODO: Figure out why this prevents debugging
-	// let debugProvider = vscode.debug.registerDebugConfigurationProvider('kinc', KincDebugProvider);
+	// let debugProvider = vscode.debug.registerDebugConfigurationProvider('kore', KoreDebugProvider);
 	// context.subscriptions.push(debugProvider);
 
 	vscode.workspace.onDidChangeWorkspaceFolders((e) => {
@@ -666,21 +688,21 @@ exports.activate = async (context) => {
 		}
 	});
 
-	const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(vscode.workspace.workspaceFolders[0], '{kfile.js,kincfile.js,korefile.js}'));
+	const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(vscode.workspace.workspaceFolders[0], '{kfile.js,korefile.js,kincfile.js}'));
 	context.subscriptions.push(watcher.onDidChange((filePath) => {
 		checkProject(vscode.workspace.workspaceFolders[0]);
 	}));
 
-	let disposable = vscode.commands.registerCommand('kinc.init', async function () {
+	let disposable = vscode.commands.registerCommand('kore.init', async function () {
 		if (!vscode.workspace.rootPath) {
 			channel.appendLine('No project opened.');
 			return;
 		}
 
 		if (fs.existsSync(path.join(vscode.workspace.rootPath, 'kfile.js'))
-		|| fs.existsSync(path.join(vscode.workspace.rootPath, 'kincfile.js'))
-		|| fs.existsSync(path.join(vscode.workspace.rootPath, 'korefile.js'))) {
-			channel.appendLine('A Kinc project already exists in the project directory.');
+		|| fs.existsSync(path.join(vscode.workspace.rootPath, 'korefile.js'))
+		|| fs.existsSync(path.join(vscode.workspace.rootPath, 'kincfile.js'))) {
+			channel.appendLine('A Kore project already exists in the project directory.');
 			return;
 		}
 
@@ -698,7 +720,7 @@ exports.activate = async (context) => {
 		child.on('close', (code) => {
 			if (code === 0) {
 				vscode.commands.executeCommand('workbench.action.reloadWindow');
-				vscode.window.showInformationMessage('Kinc project created.');
+				vscode.window.showInformationMessage('Kore project created.');
 			}
 			else {
 				channel.appendLine('kmake --init returned an error.');
@@ -708,20 +730,20 @@ exports.activate = async (context) => {
 
 	context.subscriptions.push(disposable);
 
-	disposable = vscode.commands.registerCommand('kinc.findKinc', () => {
-		return findKinc();
+	disposable = vscode.commands.registerCommand('kore.findKore', () => {
+		return findKore();
 	});
 
 	context.subscriptions.push(disposable);
 
-	disposable = vscode.commands.registerCommand('kinc.findFFMPEG', () => {
+	disposable = vscode.commands.registerCommand('kore.findFFMPEG', () => {
 		return findFFMPEG();
 	});
 
 	context.subscriptions.push(disposable);
 
-	disposable = vscode.commands.registerCommand('kinc.updateKinc', () => {
-		updateKinc();
+	disposable = vscode.commands.registerCommand('kore.updateKore', () => {
+		updateKore();
 	});
 
 	context.subscriptions.push(disposable);
@@ -734,7 +756,7 @@ exports.activate = async (context) => {
 	context.subscriptions.push(targetItem);
 
 	disposable = vscode.commands.registerCommand("kha.selectCompletionTarget", () => {
-		let items = ['HTML5', 'Krom', 'Kinc', 'Android (Java)', 'Flash', 'HTML5-Worker', 'Java', 'Node.js', 'Unity', 'WPF'];
+		let items = ['HTML5', 'Krom', 'Kore', 'Android (Java)', 'Flash', 'HTML5-Worker', 'Java', 'Node.js', 'Unity', 'WPF'];
 		vscode.window.showQuickPick(items).then((choice) => {
 			if (!choice || choice === currentTarget) {
 				return;
@@ -749,7 +771,7 @@ exports.activate = async (context) => {
 						return 'debug-html5';
 					case 'Krom':
 						return 'krom';
-					case 'Kinc':
+					case 'Kore':
 						switch (process.platform) {
 							case 'win32':
 								return 'windows';
@@ -793,10 +815,10 @@ exports.activate = async (context) => {
 	context.subscriptions.push(disposable);*/
 
 	let api = {
-		findKinc: findKinc,
+		findKore: findKore,
 		findFFMPEG: findFFMPEG,
 		compile: compile,
-		updateKinc: updateKinc
+		updateKore: updateKore
 	};
 
 	return api;
