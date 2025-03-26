@@ -410,7 +410,7 @@ async function chmodEverything() {
 	chmod(path.join(base, 'Tools', sysdir(), 'kmake'));
 }
 
-async function checkProject(rootPath, channel) {
+async function createVSCodeProject(rootPath, channel) {
 	if (!fs.existsSync(path.join(rootPath, 'kfile.js'))) {
 		return;
 	}
@@ -425,7 +425,6 @@ async function checkProject(rootPath, channel) {
 
 	const options = createOptions(currentPlatform(), false);
 	options.push('--vscode');
-	options.push('--noshaders');
 	child_process.spawnSync(await findKmake(channel), options);
 
 	/*const protoPath = path.join(rootPath, '.vscode', 'protolaunch.json');
@@ -693,7 +692,7 @@ exports.activate = async (context) => {
 	await checkKore(channel);
 
 	if (vscode.workspace.rootPath) {
-		checkProject(vscode.workspace.rootPath, channel);
+		createVSCodeProject(vscode.workspace.rootPath, channel);
 	}
 
 	findKmake(channel).then((kmake) => {
@@ -709,14 +708,14 @@ exports.activate = async (context) => {
 	vscode.workspace.onDidChangeWorkspaceFolders((e) => {
 		for (let folder of e.added) {
 			if (folder.uri.fsPath) {
-				checkProject(folder.uri.fsPath);
+				createVSCodeProject(folder.uri.fsPath);
 			}
 		}
 	});
 
 	const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(vscode.workspace.workspaceFolders[0], '{kfile.js,korefile.js,kincfile.js}'));
 	context.subscriptions.push(watcher.onDidChange((filePath) => {
-		checkProject(vscode.workspace.workspaceFolders[0]);
+		createVSCodeProject(vscode.workspace.workspaceFolders[0]);
 	}));
 
 	let disposable = vscode.commands.registerCommand('kore.init', async function () {
