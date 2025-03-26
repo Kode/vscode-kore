@@ -1,3 +1,7 @@
+### 25.3.1
+
+* Make the Kore-search more robust.
+
 ### 25.3.0
 
 * Rename to Kore so it can work for all versions and make some adjustments for Kore 3

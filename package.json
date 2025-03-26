@@ -2,7 +2,7 @@
 	"name": "kore",
 	"displayName": "Kore",
 	"description": "Kore support",
-	"version": "25.3.0",
+	"version": "25.3.1",
 	"publisher": "kodetech",
 	"engines": {
 		"vscode": "^1.64.0"
