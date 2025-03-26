@@ -214,12 +214,20 @@ async function findKore(channel) {
 		ranKoreFile = true;
 
 		if (koreDirectory) {
+			if (!path.isAbsolute(koreDirectory)) {
+				koreDirectory = path.join(vscode.workspace.rootPath, koreDirectory);
+			}
 			return koreDirectory;
 		}
 	}
 
 	try {
 		koreDirectory = fs.readFileSync(path.resolve(vscode.workspace.rootPath, 'build', 'korepath'), {encoding: 'utf8'}).trim();
+
+		if (!path.isAbsolute(koreDirectory)) {
+			koreDirectory = path.join(vscode.workspace.rootPath, koreDirectory);
+		}
+
 		return koreDirectory;
 	}
 	catch (err) {}
@@ -233,6 +241,11 @@ async function findKore(channel) {
 			|| fs.existsSync(path.join(localkorepath, 'Tools', 'kmake', 'kmake'))
 		)) {
 		koreDirectory = localkorepath;
+
+		if (!path.isAbsolute(koreDirectory)) {
+			koreDirectory = path.join(vscode.workspace.rootPath, koreDirectory);
+		}
+
 		return koreDirectory;
 	}
 
