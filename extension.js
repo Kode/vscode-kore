@@ -198,21 +198,31 @@ const VrApi = {};
 let ranKoreFile = false;
 
 async function findKore(channel) {
+	if (koreDirectory) {
+		return koreDirectory;
+	}
+
 	if (!ranKoreFile) {
 		koreDirectory = null;
 		currentDirectory = path.resolve(vscode.workspace.rootPath);
 		try {
 			await findKoreWithKfile(channel, currentDirectory);
-			ranKoreFile = true;
 		}
 		catch (err) {
 
 		}
+		ranKoreFile = true;
+
+		if (koreDirectory) {
+			return koreDirectory;
+		}
 	}
 
-	if (koreDirectory) {
+	try {
+		koreDirectory = fs.readFileSync(path.resolve(vscode.workspace.rootPath, 'build', 'korepath'), {encoding: 'utf8'}).trim();
 		return koreDirectory;
 	}
+	catch (err) {}
 
 	let localkorepath = path.resolve(vscode.workspace.rootPath, 'Kore');
 	if (fs.existsSync(localkorepath) &&
@@ -222,15 +232,18 @@ async function findKore(channel) {
 			|| fs.existsSync(path.join(localkorepath, 'Tools', sysdir(), 'kmake' + sys2()))
 			|| fs.existsSync(path.join(localkorepath, 'Tools', 'kmake', 'kmake'))
 		)) {
-		return localkorepath;
+		koreDirectory = localkorepath;
+		return koreDirectory;
 	}
 
 	let korepath = vscode.workspace.getConfiguration('kore').korePath;
 	if (korepath.length > 0) {
-		return path.isAbsolute(korepath) ? korepath : path.resolve(vscode.workspace.rootPath, korepath);
+		koreDirectory = path.isAbsolute(korepath) ? korepath : path.resolve(vscode.workspace.rootPath, korepath);
+		return koreDirectory;
 	}
 
-	return path.join(getExtensionPath(), 'Kore');
+	koreDirectory = path.join(getExtensionPath(), 'Kore');
+	return koreDirectory;
 }
 
 async function isUsingInternalKore(channel) {
