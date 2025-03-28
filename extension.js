@@ -232,7 +232,58 @@ async function findKore(channel) {
 	}
 	catch (err) {}
 
-	let localkorepath = path.resolve(vscode.workspace.rootPath, 'Kore');
+	let localkorepath = path.resolve(vscode.workspace.rootPath, 'kore');
+	if (fs.existsSync(localkorepath) &&
+		(
+			fs.existsSync(path.join(localkorepath, 'tools', sysdir(), 'kmake' + sys2()))
+			|| fs.existsSync(path.join(localkorepath, 'tools', 'kmake', 'kmake'))
+			|| fs.existsSync(path.join(localkorepath, 'Tools', sysdir(), 'kmake' + sys2()))
+			|| fs.existsSync(path.join(localkorepath, 'Tools', 'kmake', 'kmake'))
+		)) {
+		koreDirectory = localkorepath;
+
+		if (!path.isAbsolute(koreDirectory)) {
+			koreDirectory = path.join(vscode.workspace.rootPath, koreDirectory);
+		}
+
+		return koreDirectory;
+	}
+
+	localkorepath = path.resolve(vscode.workspace.rootPath, 'Kore');
+	if (fs.existsSync(localkorepath) &&
+		(
+			fs.existsSync(path.join(localkorepath, 'tools', sysdir(), 'kmake' + sys2()))
+			|| fs.existsSync(path.join(localkorepath, 'tools', 'kmake', 'kmake'))
+			|| fs.existsSync(path.join(localkorepath, 'Tools', sysdir(), 'kmake' + sys2()))
+			|| fs.existsSync(path.join(localkorepath, 'Tools', 'kmake', 'kmake'))
+		)) {
+		koreDirectory = localkorepath;
+
+		if (!path.isAbsolute(koreDirectory)) {
+			koreDirectory = path.join(vscode.workspace.rootPath, koreDirectory);
+		}
+
+		return koreDirectory;
+	}
+
+	localkorepath = path.resolve(vscode.workspace.rootPath, '..', 'kore');
+	if (fs.existsSync(localkorepath) &&
+		(
+			fs.existsSync(path.join(localkorepath, 'tools', sysdir(), 'kmake' + sys2()))
+			|| fs.existsSync(path.join(localkorepath, 'tools', 'kmake', 'kmake'))
+			|| fs.existsSync(path.join(localkorepath, 'Tools', sysdir(), 'kmake' + sys2()))
+			|| fs.existsSync(path.join(localkorepath, 'Tools', 'kmake', 'kmake'))
+		)) {
+		koreDirectory = localkorepath;
+
+		if (!path.isAbsolute(koreDirectory)) {
+			koreDirectory = path.join(vscode.workspace.rootPath, koreDirectory);
+		}
+
+		return koreDirectory;
+	}
+
+	localkorepath = path.resolve(vscode.workspace.rootPath, '..', 'Kore');
 	if (fs.existsSync(localkorepath) &&
 		(
 			fs.existsSync(path.join(localkorepath, 'tools', sysdir(), 'kmake' + sys2()))
